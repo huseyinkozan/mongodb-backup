@@ -1,60 +1,52 @@
-# mongodb-backup-s3
+# mongodb-backup
 
-This image runs mongodump to backup data using cronjob to an s3 bucket
+This image runs mongodump to backup data using cronjob to disk
 
 ## Usage:
 
 ```
 docker run -d \
-  --env AWS_ACCESS_KEY_ID=awsaccesskeyid \
-  --env AWS_SECRET_ACCESS_KEY=awssecretaccesskey \
-  --env BUCKET=s3bucket
+  --env ROOT_PATH='/backups'
   --env MONGODB_HOST=mongodb.host \
   --env MONGODB_PORT=27017 \
   --env MONGODB_USER=admin \
   --env MONGODB_PASS=password \
-  halvves/mongodb-backup-s3
+  huseyinkozan/mongodb-backup
 ```
 
-If you link `halvves/mongodb-backup-s3` to a mongodb container with an alias named mongodb, this image will try to auto load the `host`, `port`, `user`, `pass` if possible. Like this:
+If you link `huseyinkozan/mongodb-backup` to a mongodb container with an alias named mongodb, this image will try to auto load the `host`, `port`, `user`, `pass` if possible. Like this:
 
 ```
 docker run -d \
-  --env AWS_ACCESS_KEY_ID=myaccesskeyid \
-  --env AWS_SECRET_ACCESS_KEY=mysecretaccesskey \
-  --env BUCKET=mybucketname \
+  --env ROOT_PATH='/mybackups' \
   --env BACKUP_FOLDER=a/sub/folder/path/ \
   --env INIT_BACKUP=true \
   --link my_mongo_db:mongodb \
-  halvves/mongodb-backup-s3
+  huseyinkozan/mongodb-backup
 ```
 
 Add to a docker-compose.yml to enhance your robotic army:
 
 For automated backups
 ```
-mongodbbackup:
-  image: 'halvves/mongodb-backup-s3:latest'
+backup:
+  image: 'huseyinkozan/mongodb-backup:latest'
   links:
     - mongodb
   environment:
-    - AWS_ACCESS_KEY_ID=myaccesskeyid
-    - AWS_SECRET_ACCESS_KEY=mysecretaccesskey
-    - BUCKET=my-s3-bucket
+    - ROOT_PATH='/mybackups'
     - BACKUP_FOLDER=prod/db/
   restart: always
 ```
 
 Or use `INIT_RESTORE` with `DISABLE_CRON` for seeding/restoring/starting a db (great for a fresh instance or a dev machine)
 ```
-mongodbbackup:
-  image: 'halvves/mongodb-backup-s3:latest'
+backup:
+  image: 'huseyinkozan/mongodb-backup:latest'
   links:
     - mongodb
   environment:
-    - AWS_ACCESS_KEY_ID=myaccesskeyid
-    - AWS_SECRET_ACCESS_KEY=mysecretaccesskey
-    - BUCKET=my-s3-bucket
+    - ROOT_PATH='/mybackups'
     - BACKUP_FOLDER=prod/db/
     - INIT_RESTORE=true
     - DISABLE_CRON=true
@@ -62,13 +54,9 @@ mongodbbackup:
 
 ## Parameters
 
-`AWS_ACCESS_KEY_ID` - your aws access key id (for your s3 bucket)
+`ROOT_PATH`: - path inside container. defaults to `/backups`
 
-`AWS_SECRET_ACCESS_KEY`: - your aws secret access key (for your s3 bucket)
-
-`BUCKET`: - your s3 bucket
-
-`BACKUP_FOLDER`: - name of folder or path to put backups (eg `myapp/db_backups/`). defaults to root of bucket.
+`BACKUP_FOLDER`: - name of folder or path to put backups (eg `db_backups/`). defaults to root path.
 
 `MONGODB_HOST` - the host/ip of your mongodb database
 
@@ -82,11 +70,11 @@ mongodbbackup:
 
 `EXTRA_OPTS` - any extra options to pass to mongodump command
 
-`CRON_TIME` - the interval of cron job to run mongodump. `0 3 * * *` by default, which is every day at 03:00hrs.
+`CRON_TIME` - the interval of cron job to run mongodump. `15 4 * * 6` by default, which is every Saturday day at 04:15 hours.
 
-`TZ` - timezone. default: `US/Eastern`
+`TZ` - timezone. default: `Europe/Istanbul`
 
-`CRON_TZ` - cron timezone. default: `US/Eastern`
+`CRON_TZ` - cron timezone. default: `Europe/Istanbul`
 
 `INIT_BACKUP` - if set, create a backup when the container launched
 
@@ -98,20 +86,20 @@ mongodbbackup:
 
 To see the list of backups, you can run:
 ```
-docker exec mongodb-backup-s3 /listbackups.sh
+docker-compose exec backup /list.sh
 ```
 
 To restore database from a certain backup, simply run (pass in just the timestamp part of the filename):
 
 ```
-docker exec mongodb-backup-s3 /restore.sh 20170406T155812
+docker-compose exec backup /restore.sh 20170406T155812
 ```
 
 To restore latest just:
 ```
-docker exec mongodb-backup-s3 /restore.sh
+docker-compose exec backup /restore.sh
 ```
 
 ## Acknowledgements
 
-  * forked from [futurist](https://github.com/futurist)'s fork of [tutumcloud/mongodb-backup](https://github.com/tutumcloud/mongodb-backup)
+  * forked from [halvves](https://github.com/halvves)'s fork of [futurist](https://github.com/futurist)'s fork of [tutumcloud/mongodb-backup](https://github.com/tutumcloud/mongodb-backup)

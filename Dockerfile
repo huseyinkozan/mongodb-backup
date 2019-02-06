@@ -1,10 +1,10 @@
-FROM mongo
+FROM mongo:4.0
 
-RUN apt-get update && apt-get -y install cron awscli
+RUN apt-get update && apt-get -y install cron
 
-ENV CRON_TIME="0 3 * * *" \
-  TZ=US/Eastern \
-  CRON_TZ=US/Eastern
+ENV CRON_TIME="15 4 * * 6" \
+  TZ=Europe/Istanbul \
+  CRON_TZ=Europe/Istanbul
 
 ADD run.sh /run.sh
 CMD /run.sh
