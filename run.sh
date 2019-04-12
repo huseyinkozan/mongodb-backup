@@ -17,8 +17,19 @@ BACKUP_PATH="$ROOT_PATH/$BACKUP_FOLDER"
 [[ ( -n "${MONGODB_DB}" ) ]] && DB_STR=" --db ${MONGODB_DB}"
 
 
+echo "=> Deleting backup scripts if exist"
+files=(/backup.sh /restore.sh /list.sh)
+for f in "${files[@]}" ; do
+    [ -e "$f" ] && rm -f $f
+done
+echo "=> Deleting soft links if exist"
+files=(/usr/bin/restore /usr/bin/backup /usr/bin/list)
+for f in "${files[@]}" ; do
+    [ -h "$f" ] && rm -f $f
+done
+
+
 echo "=> Creating backup script"
-rm -f /backup.sh
 cat <<EOF >> /backup.sh
 #!/bin/bash
 err_exit() {
@@ -45,7 +56,6 @@ chmod +x /backup.sh
 echo "=> Backup script created"
 
 echo "=> Creating restore script"
-rm -f /restore.sh
 cat <<EOF >> /restore.sh
 #!/bin/bash
 err_exit() {
@@ -71,7 +81,6 @@ chmod +x /restore.sh
 echo "=> Restore script created"
 
 echo "=> Creating list script"
-rm -f /list.sh
 cat <<EOF >> /list.sh
 #!/bin/bash
 err_exit() {
